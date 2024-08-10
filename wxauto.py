@@ -706,28 +706,32 @@ class WeChat(WeChatBase):
         """
         self._show()
         self.SwitchToContact()
-
-        print(self.SessionBox.ButtonControl(Name='取消'))
         cancelButton= self.SessionBox.ButtonControl(Name='取消')
-        if(cancelButton.IsEnabled):
+        # if(cancelButton.IsEnabled):
+        if(cancelButton.Exists()):
             cancelButton.Click(simulateMove=False)
-            print('这是测试取消')
-            # print(self.SessionBox.ButtonControl(Name='取消'))
-            # self.SessionBox.ButtonControl(Name='cancel').Click(simulateMove=False) 
+            # print('这是测试取消')
         self.SessionBox.ButtonControl(Name='添加朋友').Click(simulateMove=False)
         edit = self.SessionBox.EditControl(Name='微信号/手机号')
         edit.Click(simulateMove=False)
         edit.SendKeys(keywords)
         self.SessionBox.TextControl(Name=f'搜索：{keywords}').Click(simulateMove=False)
-    
-    
+
         ContactProfileWnd = uia.PaneControl(ClassName='ContactProfileWnd')
+        #如果存在弹窗说明账号存在
         if ContactProfileWnd.Exists(maxSearchSeconds=2):
             # 点击添加到通讯录
-            ContactProfileWnd.ButtonControl(Name='添加到通讯录').Click(simulateMove=False)
+            AddToContactButton = ContactProfileWnd.ButtonControl(Name='添加到通讯录')
+            if AddToContactButton.Exists():
+                AddToContactButton.Click(simulateMove=False)    
+            else:
+                 wxlog.debug('已经添加')
+                 #状态码1=已经添加
+                 #状态码2=没找到
+                 return 1
         else:
             wxlog.debug('未找到联系人')
-            return False
+            return 2
 
         NewFriendsWnd = self.UiaAPI.WindowControl(ClassName='WeUIDialog')
         if NewFriendsWnd.Exists(maxSearchSeconds=2):
@@ -751,7 +755,7 @@ class WeChat(WeChatBase):
                     NewFriendsWnd.PaneControl(ClassName='DropdownWindow').TextControl().Click(simulateMove=False)
 
             NewFriendsWnd.ButtonControl(Name='确定').Click(simulateMove=False)
-        return True
+        return 0
     
 class WeChatFiles:
     def __init__(self, language='cn') -> None:
